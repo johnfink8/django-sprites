@@ -30,6 +30,8 @@ Requirements:
     *  urllib2
     
 Setup:
+    
+    *  pip install django-sprites
 
     *  Add to your settings.py INSTALLED_APPS:
         'sprites',
