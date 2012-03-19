@@ -18,7 +18,7 @@ setup(
     license = "MIT",
     keywords = "django sprite image",
     url = "https://github.com/johnfink8/django-sprites",
-    py_modules = ['sprites'],
+    packages = ['sprites'],
     long_description=read('README'),
     classifiers=[
         "Development Status :: 3 - Alpha",
@@ -27,4 +27,9 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Topic :: Internet :: WWW/HTTP :: WSGI"
     ],
+    install_requires=[
+        'PIL',
+        'uuid',
+        'django',
+    ]
 )
