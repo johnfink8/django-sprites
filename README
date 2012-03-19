@@ -54,11 +54,41 @@ Setup:
         SPRITE_ITEM_PATH = '<another relative path>'
         
         These default to 'sprites' and 'sprite_items', respectively.
+    
+    *  Bulk load images into a sprite by calling:
+          
+          sprite=Sprite.create_from_urls(['http://path.to/first.jpg',
+              'http://path.to/second.jpg'...])
+          # or...
+          sprite=Sprite.create_from_local_files(['/path/to/first/file',
+              '/path/to/second/file'])
+          
+          for spriteitem in sprite.spriteitem_set.all():
+              # each spriteitem should get a (unique) css_id at least, 
+              # and a css_class if you intend to do any further styling
+              pass
+    
+    *  SpriteItem methods
+           spriteitem.style - outputs CSS style directives, without 
+            specifying it with a selector
+            i.e.: "display:block; background: url(whatever); etc.;"
+           
+           spriteitem.css - outputs the same style directives, with a 
+            selector based on spriteitem.css_id
+            i.e.: "#myimage {display:block; etc.;}"
+           
+           spriteitem.tag_with_style - ouputs a safe-marked (ready to 
+            use in a template) HTML span tag with embedded style attrib,
+            including any internal HTML given by spriteitem.internal_html
+             
+          
 
 
 ToDo:  
 
     *  Further refinements for storage, including S3 storage and hooks
        to make it user-extendable
+    
+    *  Add a thumbnail generator
     
     *  Finish ToDo list

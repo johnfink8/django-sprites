@@ -66,6 +66,7 @@ class Sprite(models.Model):
             item.image.save(filename,File(img_temp))
             item.save(build=False)
         self.build()
+        return self
     
     @classmethod
     def create_from_local_files(cls,filenames):
@@ -77,6 +78,7 @@ class Sprite(models.Model):
             item.image.save(filename,File(img_temp))
             item.save(build=False)
         self.build()
+        return self
             
 
     
@@ -122,3 +124,4 @@ def spriteitem_presave(sender, **kwargs):
     except:
         print 'making sprite'
         instance.sprite=Sprite.objects.create(filetype="JPEG")
+
