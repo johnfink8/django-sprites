@@ -1,0 +1,64 @@
+django-sprites is a Django app with two bundled models that handle 
+Sprites and their associated SpriteItems.  
+
+    * A Sprite is a combined image, consisting of one or more 
+      SpriteItems, each of which is an image intended to be used as an 
+      image background for an HTML element.
+    
+    * Combining these background images into a single image can 
+      enormously save on load times.  There is a lot of time loss in 
+      sequentially requesting multiple images from the same server, and 
+      only 2-4 can be requested simultaneously.  So if you have 20 or 
+      30, that could add hundreds or thousands of milliseconds to your 
+      overall page load.
+    
+    * Each SpriteItem contains the info actually relevant to your site 
+      design, like the image itself, dimensions (which are calculated),
+      HTML attributes like class and id, and these are used by the 
+      model methods to generate styling, full CSS lines, and/or an HTML
+      tag source with the relevant image behind it and any input HTML 
+      inside.
+
+Requirements:
+
+    *  PIL, with libjpeg support
+    
+    *  Django (obviously)
+    
+    *  Uuid
+    
+    *  urllib2
+    
+Setup:
+
+    *  Add to your settings.py:
+        'sprites',
+    
+    *  Also in settings.py:
+        MEDIA_ROOT = 'path/to/your/actual/intended/media/root'
+        
+        This will be used along with the relative paths in the next 
+        config items to determine save locations for images.
+        
+        
+        MEDIA_URL = 'http://myserver.mydomain.com/media'
+        
+        This is used by Django to generate URLs for ImageFiles, in
+        addition to the relative paths below.  Fully-qualified path is
+        not actually required, but it's better to make it fully-
+        qualified here so that you can use the HTML on any domain, not
+        just the same as your Django app.
+    
+    *  Also in settings.py (optional):
+        SPRITE_PATH = '<some relative path to store sprites>'
+        SPRITE_ITEM_PATH = '<another relative path>'
+        
+        These default to 'sprites' and 'sprite_items', respectively.
+
+
+ToDo:  
+
+    *  Further refinements for storage, including S3 storage and hooks
+       to make it user-extendable
+    
+    *  Finish ToDo list
