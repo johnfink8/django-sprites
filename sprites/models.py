@@ -19,15 +19,21 @@ from django.dispatch import receiver
 SPRITE_PATH=getattr(settings, 'SPRITE_PATH', 'sprites')
 SPRITE_ITEM_PATH=getattr(settings, 'SPRITE_ITEM_PATH', 'sprite_items')
 
-FILETYPE_CHOICES=[
-    ('JPEG','JPEG'),
-    ('PNG','PNG'),
-    ]
+EXTENSIONS = {
+    'JPEG':'jpg',
+    'PNG':'png',
+}
 
 class Sprite(models.Model):
     image=models.ImageField(upload_to=SPRITE_PATH,null=True,blank=True)
+    extension=models.CharField(max_length=4,default='jpg')
+    ready=models.BooleanField(default=True)
     
     def build(self):
+        if not self.ready:
+            return
+        self.ready=False
+        self.save()
         img_data = {}
         img_data["items"] = self.spriteitem_set.filter(height__isnull=False)
         img_data["sprite"] = {}
@@ -35,29 +41,32 @@ class Sprite(models.Model):
         item_count = len(img_data["items"])
         item_loop = 0
         item_top = 0
-        img_temp = NamedTemporaryFile(delete=True)
-        filename=uuid.uuid1().hex
+        print 'build called with %i images'%(item_count)
         
         for obj_item in img_data["items"]:
             if obj_item.height is not None:
                 pasteBox = (0, item_top, obj_item.width, item_top+obj_item.height)
                 obj_item.top=item_top
+                imgItem = Image.open(obj_item.image)
+                self.extension=EXTENSIONS[imgItem.format]
                 obj_item.save(build=False)
                 item_top += obj_item.height
-                print pasteBox
-                if os.path.isfile(obj_item.image.path):
-                    imgItem = Image.open(obj_item.image.path)
-                    img_sprite.paste(imgItem, pasteBox)
+                img_sprite.paste(imgItem, pasteBox)
                 imgItem = None
                 item_loop += 1
+                
+        self.save()
 
-        img_sprite.save(img_temp, "JPEG")
+        img_temp = NamedTemporaryFile(suffix='.'+self.extension)
+        filename=uuid.uuid1().hex + '.' + self.extension
+        img_sprite.save(img_temp)
         img_sprite = None
+        self.ready=True
         self.image.save(filename,File(img_temp))
     
     @classmethod
     def create_from_urls(cls,urls):
-        self=cls.objects.create(filetype="JPEG")
+        self=cls.objects.create(ready=False)
         for url in urls:
             img_temp = NamedTemporaryFile(delete=True)
             img_temp.write(urllib2.urlopen(url).read())
@@ -65,18 +74,22 @@ class Sprite(models.Model):
             item=SpriteItem(sprite=self)
             item.image.save(filename,File(img_temp))
             item.save(build=False)
+        self.ready=True
+        self.save()
         self.build()
         return self
     
     @classmethod
     def create_from_local_files(cls,filenames):
-        self=cls.objects.create(filetype="JPEG")
+        self=cls.objects.create(ready=False)
         for filename in filenames:
             img_temp = NamedTemporaryFile(delete=True)
             img_temp.write(open(filename,'r').read())
             item=SpriteItem(sprite=self)
             item.image.save(filename,File(img_temp))
             item.save(build=False)
+        self.ready=True
+        self.save()
         self.build()
         return self
             
@@ -122,6 +135,5 @@ def spriteitem_presave(sender, **kwargs):
     try:
         sprite=instance.sprite
     except:
-        print 'making sprite'
-        instance.sprite=Sprite.objects.create(filetype="JPEG")
+        instance.sprite=Sprite.objects.create()
 

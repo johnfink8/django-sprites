@@ -96,16 +96,18 @@ Setup:
                     return '<a href="%s">%s</a>'%(
                         self.link,self.spriteitem.tag_with_style)
                 return self.spriteitem.tag_with_style
+        
+    *  Should support django-storages backend extensions.  Tested 
+        working with S3BotoStorage, at least.
+    
+    *  Detects and sets image filetype based on the PIL-detected format 
+        of the component SpriteItem images.  Ultimately it uses the last
+        SpriteItem attached to the Sprite to set the format.
 
 
 ToDo:  
 
-    *  Further refinements for storage, including S3 storage and hooks
-       to make it user-extendable
-    
     *  Add a thumbnail generator
-    
-    *  Add PNG option, or better yet, detection
     
     *  Finish ToDo list
     
