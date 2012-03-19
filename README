@@ -68,7 +68,7 @@ Setup:
               # and a css_class if you intend to do any further styling
               pass
     
-    *  SpriteItem methods
+    *  SpriteItem properties
            spriteitem.style - outputs CSS style directives, without 
             specifying it with a selector
             i.e.: "display:block; background: url(whatever); etc.;"
