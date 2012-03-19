@@ -31,7 +31,7 @@ Requirements:
     
 Setup:
 
-    *  Add to your settings.py:
+    *  Add to your settings.py INSTALLED_APPS:
         'sprites',
     
     *  Also in settings.py:
