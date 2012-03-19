@@ -81,7 +81,19 @@ Setup:
             use in a template) HTML span tag with embedded style attrib,
             including any internal HTML given by spriteitem.internal_html
              
-          
+    *  Note:  This isn't really meant to be used by itself.  Ideally, 
+        you'll have some kind of model that you'll ForeignKey relate to 
+        SpriteItem, like:
+        
+        class SiteElement(models.Model):
+            spriteitem=models.ForeignKey(SpriteItem)
+            link=models.CharField(max_length=255,null=True,blank=True)
+            
+            def get_tag(self):
+                if self.link is not None:
+                    return '<a href="%s">%s</a>'%(
+                        self.link,self.spriteitem.tag_with_style)
+                return self.spriteitem.tag_with_style
 
 
 ToDo:  
