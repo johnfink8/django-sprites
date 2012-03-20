@@ -37,22 +37,26 @@ class Sprite(models.Model):
             return
         self.ready=False
         self.save()
-        img_data = {}
-        img_data["items"] = self.spriteitem_set.filter(height__isnull=False)
-        img_data["sprite"] = {}
-        img_sprite = Image.new("RGBA", (img_data["items"].aggregate(Max('width'))['width__max'],img_data["items"].aggregate(Sum('height'))['height__sum']))
-        item_count = len(img_data["items"])
+        try:
+            self.image.delete()
+        except:
+            pass
+        spriteitems = self.spriteitem_set.filter(height__isnull=False)
+        if len(spriteitems) == 0:
+            self.ready=True
+            self.save()
+            return 
+        img_sprite = Image.new("RGBA", (spriteitems.aggregate(Max('width'))['width__max'],spriteitems.aggregate(Sum('height'))['height__sum']))
         item_loop = 0
         item_top = 0
-        print 'build called with %i images'%(item_count)
         
-        for obj_item in img_data["items"]:
+        for obj_item in spriteitems:
             if obj_item.height is not None:
                 pasteBox = (0, item_top, obj_item.width, item_top+obj_item.height)
                 obj_item.top=item_top
                 imgItem = Image.open(obj_item.image)
                 self.extension=EXTENSIONS[imgItem.format]
-                obj_item.save(build=False)
+                obj_item.save()
                 item_top += obj_item.height
                 img_sprite.paste(imgItem, pasteBox)
                 imgItem = None
@@ -65,6 +69,10 @@ class Sprite(models.Model):
         img_sprite.save(img_temp)
         img_sprite = None
         self.ready=True
+        try:
+            self.image.delete()
+        except:
+            pass
         self.image.save(filename,File(img_temp))
     
     @classmethod
@@ -78,6 +86,7 @@ class Sprite(models.Model):
                 self=cls.objects.create(ready=False,location_hash=md5(location).hexdigest())
         else:
             self=cls.objects.create(ready=False,location_hash=uuid.uuid1().hex)
+        rebuild=[self]
         for url in urls:
             img_temp = NamedTemporaryFile(delete=True)
             img_temp.write(urllib2.urlopen(url).read())
@@ -86,8 +95,20 @@ class Sprite(models.Model):
                 item=SpriteItem.objects.get(origin_hash=md5(url).hexdigest())
             except:
                 item=SpriteItem(sprite=self,origin_hash=md5(url).hexdigest())
+            try:
+                item.image.delete()
+            except:
+                pass
+            rebuild.append(item.sprite)
+            item.sprite=self
             item.image.save(filename,File(img_temp))
-            item.save(build=False)
+            item.save()
+        rebuild_set=set(rebuild)
+        rebuild_set.remove(self)
+        for sprite in rebuild_set:
+            sprite.ready=True
+            sprite.save()
+            sprite.build()
         self.ready=True
         self.save()
         self.build()
@@ -100,12 +121,48 @@ class Sprite(models.Model):
             img_temp = NamedTemporaryFile(delete=True)
             img_temp.write(open(filename,'r').read())
             item=SpriteItem(sprite=self,origin_hash=md5(filename).hexdigest())
+            try:
+                item.image.delete()
+            except:
+                pass
+            item.sprite=self
             item.image.save(filename,File(img_temp))
-            item.save(build=False)
+            item.save()
         self.ready=True
         self.save()
         self.build()
         return self
+    
+    def create_thumbnails(self,width=64,height=64):
+        location_hash = self.location_hash+ 'thumbsprite'
+        try:
+            thumbsprite = Sprite.objects.get(location_hash=location_hash)
+            thumbsprite.ready=False
+            thumbsprite.save()
+        except:
+            thumbsprite=Sprite.objects.create(location_hash=location_hash,ready=False)
+        for img in self.spriteitem_set.filter(width__isnull=False):
+            thumb_image=img.make_thumbnail(width,height)
+            img_temp = NamedTemporaryFile(suffix='.'+EXTENSIONS[thumb_image.format])
+            thumb_image.save(img_temp,thumb_image.format)
+            origin_hash=img.origin_hash+'thumb'
+            filename=uuid.uuid1().hex + '.'+EXTENSIONS[thumb_image.format]
+            try:
+                thumbspriteitem=SpriteItem.objects.get(origin_hash=origin_hash)
+                thumbspriteitem.sprite=thumbsprite
+            except:
+                thumbspriteitem=SpriteItem(origin_hash=origin_hash,sprite=thumbsprite)
+            try:
+                thumspriteitem.image.delete()
+            except:
+                pass
+            thumbspriteitem.image.save(filename,File(img_temp))
+            img.thumbnail = thumbspriteitem
+            img.save()
+        thumbsprite.ready=True
+        thumbsprite.save()
+        thumbsprite.build()
+        return thumbsprite
             
 
     
@@ -119,11 +176,13 @@ class SpriteItem(models.Model):
     css_class=models.CharField(max_length=127,default='',blank=True)
     internal_html=models.TextField(default='',blank=True)
     origin_hash=models.CharField(max_length=127,null=True,blank=True,unique=True)
+    thumbnail=models.OneToOneField('self',related_name='fullsize',null=True,blank=True)
     
-    def save(self,build=True,*args,**kwargs):
-        super(SpriteItem,self).save(*args,**kwargs)
-        if build:
-            self.sprite.build()
+    def make_thumbnail(self,width=64,height=64):
+        im=Image.open(self.image)
+        image_format=im.format
+        im.thumbnail((width,height),Image.ANTIALIAS)
+        return im
     
     @property
     def style(self):

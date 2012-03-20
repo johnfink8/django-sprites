@@ -11,10 +11,10 @@ def read(fname):
 
 setup(
     name = "django-sprites",
-    version = "0.3.0",
+    version = "0.4.0",
     author = "John Fink",
     author_email = "johnfink8@gmail.com",
-    description = ("Django app models to handle image sprites to speed up page loads with multiple small images."),
+    description = ("Django app models to handle image sprites to speed up page loads that have multiple small images."),
     license = "MIT",
     keywords = "django sprite image",
     url = "https://github.com/johnfink8/django-sprites",
@@ -25,11 +25,21 @@ setup(
         "Framework :: Django",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
-        "Topic :: Internet :: WWW/HTTP :: WSGI"
+        'Operating System :: OS Independent',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 2.5',
+        'Programming Language :: Python :: 2.6',
+        'Programming Language :: Python :: 2.7',
+        'Topic :: Internet :: WWW/HTTP',
+        'Topic :: Internet :: WWW/HTTP :: Dynamic Content',
+        'Topic :: Multimedia :: Graphics',
+        'Topic :: Multimedia :: Graphics :: Graphics Conversion',
     ],
     install_requires=[
         'PIL',
         'uuid',
         'django',
+        'urllib2',
+        'urlparse',
     ]
 )
