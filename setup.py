@@ -19,7 +19,7 @@ setup(
     keywords = "django sprite image",
     url = "https://github.com/johnfink8/django-sprites",
     packages = ['sprites'],
-    long_description=read('README'),
+    long_description=read('README.md'),
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Framework :: Django",
