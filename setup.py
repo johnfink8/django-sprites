@@ -11,7 +11,7 @@ def read(fname):
 
 setup(
     name = "django-sprites",
-    version = "0.2.0",
+    version = "0.3.0",
     author = "John Fink",
     author_email = "johnfink8@gmail.com",
     description = ("Django app models to handle image sprites to speed up page loads with multiple small images."),

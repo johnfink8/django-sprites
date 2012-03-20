@@ -82,10 +82,23 @@ Setup:
            spriteitem.tag_with_style - ouputs a safe-marked (ready to 
             use in a template) HTML span tag with embedded style attrib,
             including any internal HTML given by spriteitem.internal_html
+    
+    *  Middleware
+           Adding 'sprites.middleware.SpriteReplaceByClass', to 
+           MIDDLEWARE_CLASSES enables the replacement of IMG elements
+           with styled DIVs.  The SRC of the IMG will become the (sprite)
+           background of the DIV.  The DOM translation isn't perfect 
+           going from IMG to DIV, so be careful with this.  By default, 
+           IMGs with css class 'sprite_img' will be replaced.  The class 
+           can be changed with SPRITE_REPLACE_CSS_CLASS in settings.py.
+           
+           Note:  The middleware relies on BeautifulSoup. Because one 
+           does not simply regex into HTML.
+
              
-    *  Note:  This isn't really meant to be used by itself.  Ideally, 
-        you'll have some kind of model that you'll ForeignKey relate to 
-        SpriteItem, like:
+    *  Note:  Other than the middleware, this isn't really meant to be 
+        used by itself.  Ideally, you'll have some kind of model that 
+        you'll ForeignKey relate to SpriteItem, like:
         
         class SiteElement(models.Model):
             spriteitem=models.ForeignKey(SpriteItem)
@@ -107,7 +120,16 @@ Setup:
 
 ToDo:  
 
-    *  Add a thumbnail generator
+    *  Add a thumbnail generator, like 
+        thumbsprite=sprite.generate_thumbnails(height,width)#-> Sprite()
+        class ThumbSpriteItem(SpriteItem):
+            spriteitem=models.OneToOneField(SpriteItem)
+        thumbspriteitem == spriteitem.thumbspriteitem
+    
+    *  Make it split up by image format, maybe.  Mixing JPEGs into a 
+       sprite detected as GIF looks atrocious.
+       
+    *  Write tests
     
     *  Finish ToDo list
     

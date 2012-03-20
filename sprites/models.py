@@ -10,6 +10,7 @@ from django.core.files.temp import NamedTemporaryFile
 from django.utils.safestring import mark_safe
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
+from hashlib import md5
 
 # In your settings.py, set SPRITE_PATH or SPRITE_ITEM_PATH to 
 # override the upload_to path for Sprites and SpriteItems, which
@@ -22,12 +23,14 @@ SPRITE_ITEM_PATH=getattr(settings, 'SPRITE_ITEM_PATH', 'sprite_items')
 EXTENSIONS = {
     'JPEG':'jpg',
     'PNG':'png',
+    'GIF':'gif',
 }
 
 class Sprite(models.Model):
     image=models.ImageField(upload_to=SPRITE_PATH,null=True,blank=True)
     extension=models.CharField(max_length=4,default='jpg')
     ready=models.BooleanField(default=True)
+    location_hash=models.CharField(max_length=127,null=True,blank=True,unique=True)
     
     def build(self):
         if not self.ready:
@@ -65,13 +68,24 @@ class Sprite(models.Model):
         self.image.save(filename,File(img_temp))
     
     @classmethod
-    def create_from_urls(cls,urls):
-        self=cls.objects.create(ready=False)
+    def create_from_urls(cls,urls,location=None):
+        if location is not None:
+            try:
+                self=cls.objects.get(location_hash=md5(location).hexdigest())
+                self.ready=False
+                self.save()
+            except:
+                self=cls.objects.create(ready=False,location_hash=md5(location).hexdigest())
+        else:
+            self=cls.objects.create(ready=False,location_hash=uuid.uuid1().hex)
         for url in urls:
             img_temp = NamedTemporaryFile(delete=True)
             img_temp.write(urllib2.urlopen(url).read())
             filename=uuid.uuid1().hex
-            item=SpriteItem(sprite=self)
+            try:
+                item=SpriteItem.objects.get(origin_hash=md5(url).hexdigest())
+            except:
+                item=SpriteItem(sprite=self,origin_hash=md5(url).hexdigest())
             item.image.save(filename,File(img_temp))
             item.save(build=False)
         self.ready=True
@@ -81,11 +95,11 @@ class Sprite(models.Model):
     
     @classmethod
     def create_from_local_files(cls,filenames):
-        self=cls.objects.create(ready=False)
+        self=cls.objects.create(ready=False,location_hash=uuid.uuid1().hex)
         for filename in filenames:
             img_temp = NamedTemporaryFile(delete=True)
             img_temp.write(open(filename,'r').read())
-            item=SpriteItem(sprite=self)
+            item=SpriteItem(sprite=self,origin_hash=md5(filename).hexdigest())
             item.image.save(filename,File(img_temp))
             item.save(build=False)
         self.ready=True
@@ -104,6 +118,7 @@ class SpriteItem(models.Model):
     css_id=models.CharField(max_length=127,null=True,default=None,blank=True)
     css_class=models.CharField(max_length=127,default='',blank=True)
     internal_html=models.TextField(default='',blank=True)
+    origin_hash=models.CharField(max_length=127,null=True,blank=True,unique=True)
     
     def save(self,build=True,*args,**kwargs):
         super(SpriteItem,self).save(*args,**kwargs)
